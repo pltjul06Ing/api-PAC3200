@@ -4,30 +4,37 @@ require('../database/connection')
 const tension = require('../database/models/tension')
 const corriente = require('../database/models/corriente')
 const potencia = require('../database/models/potencia')
-let fechaActual = new Date()
 
-async function allValue(model) {
+async function allValue(model, date) {
+	let range//hace referencia si los datos a devolver van a ser del ultimo dia u hora 
+	if (date == 'hora') {
+		range = lastHour(new Date())
+	} else {
+		range = lastDay(new Date())
+	}
 	const listModel = await model.find({
 		date: {
-			$gte: ayer
+			$gte: range
 		}
 	})
+	console.log(range)
 	return listModel
 
 }
 
-const calcDias = (fecha, dias) => {
-	fecha.setDate(fecha.getDate() + dias)
-	return fecha
-
+const lastDay = (date) => {
+	date.setDate(date.getDate() - 1)
+	return date
 }
-let ayer = calcDias(fechaActual, -1)
-
+const lastHour = (date) => {
+	date.setHours(date.getHours() - 1)
+	return date
+}
 
 router.get('/tension', (req, res) => {
 	tension.find({
 		date: {
-			$gte: ayer
+			$gte: lastDay(new Date())
 			//	$gte: new Date("2021-08-30T00:00:00.000Z")
 		}
 	})
@@ -40,7 +47,7 @@ router.get('/corriente', (req, res) => {
 
 	corriente.find({
 		date: {
-			$gte: ayer
+			$gte: lastDay(new Date())
 		}
 	})
 		.exec()
@@ -50,8 +57,8 @@ router.get('/corriente', (req, res) => {
 })
 
 router.get('/potencia', (req, res) => {
-
-	allValue(potencia)
+	const prueba = req.headers.prueba
+	allValue(potencia, prueba)
 		.then((listModel) => {res.json(listModel)})
 		.catch((err) => {console.log(err)})
 
